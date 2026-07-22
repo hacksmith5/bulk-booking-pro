@@ -1,0 +1,6 @@
+{
+  "appId": "com.bulkbookingpro.app",
+  "appName": "Bulk Booking Pro",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}

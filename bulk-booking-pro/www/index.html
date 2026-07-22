@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#3b82f6">
+    <title>Post Office Bulk Booking Pro</title>
+    
+    <link rel="manifest" id="manifest-link">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+    <!-- Linked CSS File -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="light">
+
+<div id="toastBox"></div>
+
+<div id="rexSplash"><div id="rexCard"><div style="font-size:45px">📦</div><h2>WELCOME</h2><div style="color:#9ca3af;font-size:14px;letter-spacing:4px;font-weight:600;">BULK BOOKING PRO</div><p style="color:#d1d5db;margin-top:15px">Conceptualized and built by<br><span style="color:#f87171;font-size:22px;font-weight:700">Rex Choudhary</span></p></div></div>
+
+<!-- Floating Action Button for Voice -->
+<button id="fabVoiceBtn" class="floating-mic" onclick="toggleVoice()">🎙️</button>
+
+<!-- Help Guide Modal -->
+<div id="helpModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>❓ Help & User Guide</h3>
+        
+        <div class="help-section">
+            <h4>🤖 AI Magic Scan Kaise Use Karein?</h4>
+            <ul>
+                <li>Parcel ki photo <b>saaf (clear)</b> kheechein.</li>
+                <li>Ensure karein ki <b>Barcode (13 chars)</b> aur <b>VPP/COD amount</b> photo mein padhne laayak ho.</li>
+                <li>AI sab kuch (Name, Address, Mobile, Pin, COD) khud bhar dega!</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4>🎙️ Voice Mode Commands</h4>
+            <p style="margin-top:0; margin-bottom: 5px; color:#ef4444; font-size:0.75rem;"><b>Note:</b> Voice Mode chalane ke liye HTTPS (Secure Netlify Link) zaroori hai.</p>
+            <ul>
+                <li>Pehle kis bhi box par click karein aur bole jo type karna hai.</li>
+                <li><span class="cmd-badge">Next</span> : Aagle box mein automatically jaane ke liye.</li>
+                <li><span class="cmd-badge">Delete it</span> : Agar box khaali karna ho.</li>
+                <li><span class="cmd-badge">Replace X with Y</span> : Galat shabd theek karne ke liye (e.g., <i>"Replace Ganga with Banga"</i>).</li>
+            </ul>
+        </div>
+
+        <div class="help-section">
+            <h4>⚡ Smart Features</h4>
+            <ul>
+                <li><b>Auto-Fallback API:</b> 1st API Key ka quota finish hote hi app khud 2nd Key par chala jayega (Total 3000 Scans).</li>
+                <li><b>Auto-Save & Memory:</b> Aapka data har second browser mein save hota hai. Purane PIN codes yaad rakhega.</li>
+                <li><b>Red Asterisk (<span style="color:#ef4444">*</span>) :</b> Ye wale boxes bharna zaruri hai.</li>
+            </ul>
+        </div>
+
+        <button class="btn-main btn-red" onclick="closeHelpModal()">✖ Close Guide</button>
+    </div>
+</div>
+
+<!-- Settings & Theme Modal -->
+<div id="apiModal" class="modal-overlay">
+    <div class="modal-content">
+        <h3>⚙️ Settings & Dashboard</h3>
+        
+        <!-- Live Dashboard -->
+        <div class="dashboard-box">
+            <p><span>📊 Total Parcels in Batch:</span> <strong id="stat_total">0</strong></p>
+            <p><span>📅 Booked Today:</span> <strong id="stat_today">0</strong></p>
+            <p><span>🤖 Active AI Model:</span> <strong id="stat_model" style="color:#8b5cf6;">Waiting...</strong></p>
+            <p><span>⚡ API Quota Limit:</span> <strong style="color: #10b981;">3,000 Scans / Day (Dual Key)</strong></p>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Primary API Key (Key 1)</p>
+        <input type="password" id="gemini_api_key_1" placeholder="Paste Primary API key..." style="margin-bottom: 10px;">
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Fallback API Key (Key 2) - <i>Optional</i></p>
+        <input type="password" id="gemini_api_key_2" placeholder="Paste 2nd API key for backup quota..." style="margin-bottom: 15px;">
+        
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">UI Settings</p>
+        <div class="checkbox-row" style="margin-top:5px; padding:10px; background:var(--bg-1); border:1px solid var(--border-col);">
+            <input type="checkbox" id="set_fab" checked>
+            <label for="set_fab">Show Floating Mic Button</label>
+        </div>
+        <div class="checkbox-row" style="margin-top:5px; margin-bottom:15px; padding:10px; background:var(--bg-1); border:1px solid var(--border-col);">
+            <input type="checkbox" id="set_splash" checked>
+            <label for="set_splash">Show Welcome Animation</label>
+        </div>
+
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">Select Theme</p>
+        <div class="theme-grid">
+            <button class="theme-btn" onclick="setTheme('light')" style="background:#f3f4f6; color:#111;">Light</button>
+            <button class="theme-btn" onclick="setTheme('dark')" style="background:#1f2937; color:#fff;">Dark</button>
+            <button class="theme-btn" onclick="setTheme('amoled')" style="background:#000; color:#fff; border:1px solid #444;">AMOLED</button>
+            <button class="theme-btn" onclick="setTheme('ocean')" style="background:#082f49; color:#fff;">Ocean</button>
+            <button class="theme-btn" onclick="setTheme('forest')" style="background:#064e3b; color:#fff;">Forest</button>
+            <button class="theme-btn" onclick="setTheme('sunset')" style="background:#450a0a; color:#fff;">Sunset</button>
+            <button class="theme-btn" onclick="setTheme('dracula')" style="background:#282a36; color:#ff79c6;">Dracula</button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn-main" onclick="saveSettings()">Save Settings</button>
+            <button class="btn-main btn-red" onclick="closeApiModal()">Close</button>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="app-header">
+        <h1>📦 Bulk Booking Pro</h1>
+        <div class="header-buttons">
+            <button id="voiceBtn" class="btn-header" onclick="toggleVoice()">🎙️ Voice</button>
+            <button class="btn-header" onclick="openHelpModal()">❓ Help</button>
+            <button class="btn-header" onclick="openApiModal()">⚙️ Settings</button>
+            <button id="installAppBtn" class="btn-header" style="background:#10b981; color:white;">Install 📱</button>
+        </div>
+    </div>
+
+    <!-- Sender Section -->
+    <div class="card">
+        <div class="card-header card-header-toggle" onclick="toggleSender()">
+            <h2>1. SENDER DETAILS</h2><span id="sender_toggle_icon" class="toggle-icon">▲ Hide</span>
+        </div>
+        <div id="sender_body">
+            <div class="grid">
+                <div class="form-group"><div class="label-row"><label>Sender Name<span class="req">*</span></label></div><input type="text" id="s_name" oninput="autoSaveSender()"></div>
+                <div class="form-group"><div class="label-row"><label>Company Name</label></div><input type="text" id="s_company" oninput="autoSaveSender()"></div>
+                <div class="form-group"><div class="label-row"><label>Mobile Number<span class="req">*</span></label></div><input type="number" id="s_mobile" oninput="autoSaveSender()"></div>
+                <div class="form-group"><div class="label-row"><label>Address Line 1<span class="req">*</span></label></div><input type="text" id="s_add1" oninput="autoSaveSender()"></div>
+                <div class="form-group"><div class="label-row"><label>Address Line 2<span class="req">*</span></label></div><input type="text" id="s_add2" oninput="autoSaveSender()"></div>
+                <div class="form-group"><div class="label-row"><label>City<span class="req">*</span></label></div><input type="text" id="s_city" oninput="autoSaveSender()"></div>
+                <div class="form-group"><div class="label-row"><label>State<span class="req">*</span></label></div><input type="text" id="s_state" oninput="autoSaveSender()"></div>
+                <div class="form-group"><div class="label-row"><label>PIN Code<span class="req">*</span></label></div><input type="number" id="s_pin" oninput="autoSaveSender(); fetchSenderCityState();" maxlength="6"></div>
+            </div>
+            <button class="btn-main" onclick="saveSender()" style="margin-top: 15px;">Save Defaults</button>
+        </div>
+    </div>
+
+    <!-- Receiver Section -->
+    <div class="card">
+        <div class="card-header"><h2>2. ADD NEW PARCEL</h2></div>
+        
+        <div class="ai-box">
+            <h3>🤖 AI Auto-Fill (Magic Scan)</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0; margin-bottom: 10px;">Scan label and Gemini AI will fill the boxes instantly!</p>
+            <div class="ai-buttons">
+                <label for="ai_camera" class="btn-ai" style="display:inline-block; margin:0; text-align:center; padding:10px;">📸 Take Photo</label>
+                <input type="file" id="ai_camera" accept="image/*" capture="environment" style="display:none;" onchange="handleAIImage(event)">
+                <label for="ai_upload" class="btn-ai" style="display:inline-block; margin:0; text-align:center; padding:10px;">📂 Upload Photo</label>
+                <input type="file" id="ai_upload" accept="image/*" style="display:none;" onchange="handleAIImage(event)">
+            </div>
+            <div id="ai_status"></div>
+        </div>
+
+        <div class="form-group">
+            <div class="label-row"><label>Barcode Number<span class="req">*</span></label></div>
+            <div class="barcode-row">
+                <input type="text" id="r_barcode" placeholder="e.g. CP422750642IN" maxlength="13">
+                <button type="button" class="btn-main" onclick="startScanner()" title="Scan Barcode">📸</button>
+            </div>
+            <div id="reader-container"><div id="reader"></div><button type="button" class="btn-main btn-red" style="margin-top: 10px;" onclick="stopScanner()">✖ Cancel</button></div>
+        </div>
+
+        <div class="grid">
+            <div class="form-group"><div class="label-row"><label>Receiver Name<span class="req">*</span></label><button type="button" class="btn-prev" onclick="copyPrev('r_name')">↻ Prev</button></div><input type="text" id="r_name"></div>
+            <div class="form-group"><div class="label-row"><label>Mobile Number<span class="req">*</span></label><button type="button" class="btn-prev" onclick="copyPrev('r_mobile')">↻ Prev</button></div><input type="number" id="r_mobile"></div>
+            <div class="form-group"><div class="label-row"><label>Address Line 1<span class="req">*</span></label><button type="button" class="btn-prev" onclick="copyPrev('r_add1')">↻ Prev</button></div><input type="text" id="r_add1" maxlength="50" oninput="checkAddressLength('r_add1')"><div class="help-text"><span id="count_r_add1">0</span>/50</div></div>
+            <div class="form-group"><div class="label-row"><label>Address Line 2<span class="req">*</span></label><div style="display:flex;gap:5px;"><button type="button" class="btn-prev" onclick="copyFromLine1()">⬇️ Same L1</button><button type="button" class="btn-prev" onclick="copyPrev('r_add2')">↻ Prev</button></div></div><input type="text" id="r_add2" maxlength="50" oninput="checkAddressLength('r_add2')"><div class="help-text"><span id="count_r_add2">0</span>/50</div></div>
+            <div class="form-group"><div class="label-row"><label>PIN Code<span class="req">*</span></label><button type="button" class="btn-prev" onclick="copyPrevPin()">↻ Prev</button></div><input type="number" id="r_pin" oninput="fetchCityState()" maxlength="6"></div>
+            <div class="conditional-group"><div class="form-group"><div class="label-row"><label>City<span class="req">*</span></label></div><input type="text" id="r_city"></div><div class="form-group"><div class="label-row"><label>State<span class="req">*</span></label></div><input type="text" id="r_state"></div></div>
+            <div class="form-group"><div class="label-row"><label>Weight (Grams)</label><button type="button" class="btn-prev" onclick="copyPrev('r_weight')">↻ Prev</button></div><input type="number" id="r_weight" value="100"></div>
+            <div class="form-group"><div class="label-row"><label>COD / CODR</label><button type="button" class="btn-prev" onclick="copyPrevCod()">↻ Prev</button></div><div style="display: flex; gap: 10px;"><select id="r_cod_type" style="flex:1"><option value="">Select</option><option value="cod">COD</option><option value="codr">CODR</option></select><input type="number" id="r_cod_amt" style="flex:1" placeholder="Amt"></div></div>
+            <div class="form-group"><div class="label-row"><label>Shape & Dims</label></div><select id="r_shape" onchange="handleShapeChange()"><option value="NROL">NROL (Non-Roll)</option><option value="ROLL">ROLL</option><option value="DOC">DOC</option></select></div>
+        </div>
+        
+        <div id="dim_nrol" class="conditional-group" style="margin-top:10px;"><div class="form-group"><label>L</label><input type="number" id="r_len" value="14"></div><div class="form-group"><label>B</label><input type="number" id="r_brd" value="9"></div><div class="form-group"><label>H</label><input type="number" id="r_ht" value="1"></div></div>
+        <div id="dim_roll" class="conditional-group" style="margin-top:10px; display:none;"><div class="form-group"><label>L</label><input type="number" id="r_r_len"></div><div class="form-group"><label>Dia</label><input type="number" id="r_dia"></div></div>
+
+        <div class="checkbox-row"><input type="checkbox" id="retain_data"><label for="retain_data">Keep ALL details for next parcel</label></div>
+        <div style="display: flex; gap: 10px; margin-top: 15px;"><button id="add_btn" class="btn-main btn-green" onclick="addReceiver()" style="flex: 1;">➕ Add Parcel</button><button id="cancel_edit_btn" class="btn-main btn-red" style="display: none; flex: 0.3;" onclick="cancelEdit()">✖ Cancel</button></div>
+    </div>
+
+    <!-- Data Table & Export -->
+    <div class="card">
+        <div class="card-header"><h2>3. READY FOR BOOKING</h2></div>
+        <div class="toolbar-group">
+            <input type="text" id="search_bar" oninput="updateTable()" placeholder="🔍 Search Barcode, Name or PIN..." style="flex: 1; min-width: 200px;">
+            <div style="display: flex; gap: 8px;">
+                <label for="import_json" class="btn-yellow" style="display:inline-block; margin:0; cursor:pointer;">📂 Restore</label><input type="file" id="import_json" accept=".json, application/json" style="display:none;" onchange="importJSON(event)">
+                <button type="button" class="btn-yellow" onclick="backupJSON()">💾 Backup</button>
+                <label for="import_excel" class="btn-yellow" style="display:inline-block; margin:0; cursor:pointer;">📂 Excel</label><input type="file" id="import_excel" accept=".xlsx, .xls" style="display:none;" onchange="importExcel(event)">
+                <button type="button" class="btn-yellow" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="clearBatch()">🗑️ Clear All</button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr><th>S.No</th><th>Actions</th><th>Barcode No</th><th>Weight</th><th>Receiver City</th><th>Receiver Pincode</th><th>Receiver Name</th><th>Address 1</th><th>Address 2</th><th>Mobile No</th><th>State</th><th>COD Type</th><th>COD Amt</th><th>Shape</th></tr>
+                </thead>
+                <tbody id="table-body"><tr><td colspan="14" style="text-align: center; padding: 20px;">No parcels added yet. Start scanning!</td></tr></tbody>
+            </table>
+        </div>
+        <button class="btn-main btn-green" style="margin-top:20px;" onclick="exportToExcel()">⬇️ Download Excel File</button>
+    </div>
+</div>
+
+<div class='rexFooter'>Conceptualized and built by <b>Rex Choudhary</b></div>
+
+<!-- Linked JavaScript File -->
+<script src="script.js"></script>
+</body>
+</html>

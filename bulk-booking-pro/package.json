@@ -1,0 +1,16 @@
+{
+  "name": "bulk-booking-pro",
+  "version": "1.0.0",
+  "description": "Bulk Booking Pro App",
+  "main": "index.js",
+  "scripts": {
+    "obfuscate": "node obfuscate.js",
+    "build": "npm run obfuscate && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^5.0.0",
+    "@capacitor/cli": "^5.0.0",
+    "@capacitor/core": "^5.0.0",
+    "javascript-obfuscator": "^3.1.0"
+  }
+}
